@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Trash2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import type { User, Feedback } from '../types';
 
@@ -54,6 +54,11 @@ export default function FeedbackPanel({ postingId, currentUser }: Props) {
     inputRef.current?.focus();
   };
 
+  const handleDelete = async (feedbackId: string) => {
+    await supabase.from('feedback').delete().eq('id', feedbackId);
+    fetchFeedbacks();
+  };
+
   const isInstructor = currentUser.role === 'instructor';
 
   return (
@@ -64,17 +69,29 @@ export default function FeedbackPanel({ postingId, currentUser }: Props) {
         </p>
       ) : (
         <ul className="feedback__list">
-          {feedbacks.map((f) => (
-            <li key={f.id} className={`feedback__item ${f.users?.name === currentUser.name ? 'feedback__item--mine' : ''}`}>
-              <div className="feedback__bubble">
-                <div className="feedback__bubble-header">
-                  <span className="feedback__author">{f.users?.name ?? '?'}</span>
-                  <span className="feedback__date">{new Date(f.created_at).toLocaleDateString('ko-KR')}</span>
+          {feedbacks.map((f) => {
+            const isMine = f.author_id === currentUser.id;
+            return (
+              <li key={f.id} className={`feedback__item ${isMine ? 'feedback__item--mine' : ''}`}>
+                <div className="feedback__bubble">
+                  <div className="feedback__bubble-header">
+                    <span className="feedback__author">{f.users?.name ?? '?'}</span>
+                    <span className="feedback__date">{new Date(f.created_at).toLocaleDateString('ko-KR')}</span>
+                    {isMine && (
+                      <button
+                        className="feedback__delete"
+                        onClick={() => handleDelete(f.id)}
+                        title="삭제"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    )}
+                  </div>
+                  <p className="feedback__content">{f.content}</p>
                 </div>
-                <p className="feedback__content">{f.content}</p>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
 

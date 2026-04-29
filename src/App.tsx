@@ -14,8 +14,8 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [filterStudent, setFilterStudent] = useState<string | null>(null);
 
-  const fetchPostings = useCallback(async (user: User) => {
-    setLoading(true);
+  const fetchPostings = useCallback(async (user: User, silent = false) => {
+    if (!silent) setLoading(true);
     let query = supabase
       .from('job_postings')
       .select('*, user:users!user_id(name), feedback!posting_id(id)')
@@ -37,7 +37,7 @@ export default function App() {
     const channel = supabase
       .channel('job_postings_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'job_postings' }, () => {
-        fetchPostings(currentUser);
+        fetchPostings(currentUser, true); // silent: 로딩 스피너 없이 백그라운드 갱신
       })
       .subscribe();
 

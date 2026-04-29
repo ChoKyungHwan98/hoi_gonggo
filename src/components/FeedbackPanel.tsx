@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Send } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import type { User, Feedback } from '../types';
@@ -14,14 +14,14 @@ export default function FeedbackPanel({ postingId, currentUser }: Props) {
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const fetchFeedbacks = async () => {
+  const fetchFeedbacks = useCallback(async () => {
     const { data } = await supabase
       .from('feedback')
       .select('*, users(name)')
       .eq('posting_id', postingId)
       .order('created_at', { ascending: true });
     setFeedbacks((data as Feedback[]) ?? []);
-  };
+  }, [postingId]);
 
   useEffect(() => {
     fetchFeedbacks();
@@ -33,18 +33,24 @@ export default function FeedbackPanel({ postingId, currentUser }: Props) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [postingId]);
+  }, [postingId, fetchFeedbacks]);
 
   const handleSubmit = async () => {
     if (!text.trim()) return;
     setSaving(true);
-    await supabase.from('feedback').insert({
+    const newText = text.trim();
+    setText(''); // 먼저 비워서 빠른 UX
+    const { error } = await supabase.from('feedback').insert({
       posting_id: postingId,
       author_id: currentUser.id,
-      content: text.trim(),
+      content: newText,
     });
-    setText('');
     setSaving(false);
+    if (error) {
+      setText(newText); // 실패 시 복원
+    } else {
+      fetchFeedbacks(); // Realtime 대기 없이 즉시 갱신
+    }
     inputRef.current?.focus();
   };
 

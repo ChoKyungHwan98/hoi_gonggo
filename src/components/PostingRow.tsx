@@ -40,9 +40,21 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
   const val = <K extends keyof JobPosting>(key: K): JobPosting[K] =>
     key in editing ? (editing[key] as JobPosting[K]) : posting[key];
 
-  const update = (key: keyof JobPosting, value: string | number | null) => {
-    setEditing((prev) => ({ ...prev, [key]: value }));
-    supabase.from('job_postings').update({ [key]: value || null }).eq('id', posting.id);
+  const update = async (key: keyof JobPosting, value: string | number | null) => {
+    const dbValue = (value === '' || value === null || value === undefined) ? null : value;
+    setEditing((prev) => ({ ...prev, [key]: dbValue }));
+    const { error } = await supabase
+      .from('job_postings')
+      .update({ [key]: dbValue })
+      .eq('id', posting.id);
+    if (error) {
+      // 실패 시 로컬 상태 롤백
+      setEditing((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }
   };
 
   const handleDelete = async () => {

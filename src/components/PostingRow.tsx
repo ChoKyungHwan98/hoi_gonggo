@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExternalLink, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { ExternalLink, Trash2, MessageSquare } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import FeedbackPanel from './FeedbackPanel';
 import type { JobPosting, User } from '../types';
@@ -10,6 +10,28 @@ interface Props {
   isInstructor: boolean;
   onDeleted: () => void;
 }
+
+const STATUS_OPTIONS = ['미지원', '지원완료', '서류통과', '면접', '최종합격', '불합격'];
+
+const statusStyle = (s: string | null) => {
+  switch (s) {
+    case '지원완료': return 'status--applied';
+    case '서류통과': return 'status--pass';
+    case '면접': return 'status--interview';
+    case '최종합격': return 'status--hired';
+    case '불합격': return 'status--rejected';
+    default: return 'status--none';
+  }
+};
+
+const deadlineUrgency = (dateStr: string | null): 'urgent' | 'soon' | null => {
+  if (!dateStr) return null;
+  const diff = (new Date(dateStr).getTime() - Date.now()) / 86400000;
+  if (diff < 0) return null;
+  if (diff <= 3) return 'urgent';
+  if (diff <= 7) return 'soon';
+  return null;
+};
 
 export default function PostingRow({ posting, currentUser, isInstructor, onDeleted }: Props) {
   const [expanded, setExpanded] = useState(false);
@@ -36,13 +58,15 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
     return 'score--low';
   };
 
-  const colSpan = isInstructor ? 9 : 8;
+  const colSpan = isInstructor ? 10 : 9;
+  const feedbackCount = posting.feedback?.length ?? 0;
+  const urgency = deadlineUrgency(val('job_deadline_date') as string | null);
 
   return (
     <>
-      <tr className="posting-row">
+      <tr className={`posting-row ${urgency ? `posting-row--${urgency}` : ''}`}>
         {isInstructor && (
-          <td className="cell" style={{ color: 'var(--text-muted)', fontWeight: 500, whiteSpace: 'nowrap' }}>
+          <td className="cell cell--student">
             {posting.user?.name ?? '—'}
           </td>
         )}
@@ -76,6 +100,21 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
             />
           )}
         </td>
+        <td className="cell cell--status">
+          {isInstructor ? (
+            <span className={`status-badge ${statusStyle(val('status') as string | null)}`}>
+              {val('status') || '미지원'}
+            </span>
+          ) : (
+            <select
+              className={`status-select ${statusStyle(val('status') as string | null)}`}
+              value={(val('status') as string) ?? '미지원'}
+              onChange={(e) => update('status', e.target.value)}
+            >
+              {STATUS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          )}
+        </td>
         <td className="cell cell--date">
           {isInstructor ? (
             <span>{val('job_posted_date') || '—'}</span>
@@ -91,12 +130,22 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
         <td className="cell cell--date">
           {isInstructor ? (
             <div className="deadline-cell">
+              {urgency && (
+                <span className={`deadline-urgency deadline-urgency--${urgency}`}>
+                  {urgency === 'urgent' ? '마감 임박!' : '마감 7일'}
+                </span>
+              )}
               {val('job_deadline_date') && <span>{val('job_deadline_date') as string}</span>}
               {val('deadline_text') && <span className="deadline-badge">{val('deadline_text') as string}</span>}
               {!val('job_deadline_date') && !val('deadline_text') && <span>—</span>}
             </div>
           ) : (
             <div className="deadline-cell">
+              {urgency && (
+                <span className={`deadline-urgency deadline-urgency--${urgency}`}>
+                  {urgency === 'urgent' ? '마감 임박!' : '마감 7일'}
+                </span>
+              )}
               <input
                 type="date"
                 className="cell__edit cell__edit--date"
@@ -138,11 +187,12 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
         </td>
         <td className="cell cell--actions">
           <button
-            className={`btn btn--icon ${expanded ? 'btn--active' : ''}`}
+            className={`btn btn--feedback ${expanded ? 'btn--active' : ''} ${feedbackCount > 0 ? 'btn--has-feedback' : ''}`}
             onClick={() => setExpanded(!expanded)}
-            title="피드백"
+            title={feedbackCount > 0 ? `피드백 ${feedbackCount}개` : '피드백'}
           >
-            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            <MessageSquare size={14} />
+            {feedbackCount > 0 && <span className="feedback-badge">{feedbackCount}</span>}
           </button>
           {!isInstructor && currentUser.id === posting.user_id && (
             <button className="btn btn--icon btn--danger" onClick={handleDelete} title="삭제">

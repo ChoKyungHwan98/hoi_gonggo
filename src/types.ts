@@ -17,7 +17,9 @@ export interface JobPosting {
   interest_score: number | null;
   notes: string | null;
   created_at: string;
+  status: string | null;
   user?: { name: string } | null;
+  feedback?: { id: string }[] | null;
 }
 
 export interface Feedback {

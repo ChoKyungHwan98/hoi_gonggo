@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import type { User, Feedback } from '../types';
@@ -12,6 +12,7 @@ export default function FeedbackPanel({ postingId, currentUser }: Props) {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [text, setText] = useState('');
   const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const fetchFeedbacks = async () => {
     const { data } = await supabase
@@ -24,6 +25,7 @@ export default function FeedbackPanel({ postingId, currentUser }: Props) {
 
   useEffect(() => {
     fetchFeedbacks();
+    setTimeout(() => inputRef.current?.focus(), 100);
 
     const channel = supabase
       .channel(`feedback-${postingId}`)
@@ -43,33 +45,49 @@ export default function FeedbackPanel({ postingId, currentUser }: Props) {
     });
     setText('');
     setSaving(false);
+    inputRef.current?.focus();
   };
+
+  const isInstructor = currentUser.role === 'instructor';
 
   return (
     <div className="feedback">
-      {feedbacks.length > 0 && (
+      {feedbacks.length === 0 ? (
+        <p className="feedback__empty">
+          {isInstructor ? '아직 피드백이 없습니다. 첫 피드백을 남겨보세요.' : '강사님의 피드백을 기다리는 중입니다.'}
+        </p>
+      ) : (
         <ul className="feedback__list">
           {feedbacks.map((f) => (
-            <li key={f.id} className="feedback__item">
-              <span className="feedback__author">{f.users?.name ?? '?'}</span>
-              <span className="feedback__content">{f.content}</span>
-              <span className="feedback__date">{new Date(f.created_at).toLocaleDateString('ko-KR')}</span>
+            <li key={f.id} className={`feedback__item ${f.users?.name === currentUser.name ? 'feedback__item--mine' : ''}`}>
+              <div className="feedback__bubble">
+                <div className="feedback__bubble-header">
+                  <span className="feedback__author">{f.users?.name ?? '?'}</span>
+                  <span className="feedback__date">{new Date(f.created_at).toLocaleDateString('ko-KR')}</span>
+                </div>
+                <p className="feedback__content">{f.content}</p>
+              </div>
             </li>
           ))}
         </ul>
       )}
 
-      {currentUser.role === 'instructor' && (
+      {isInstructor && (
         <div className="feedback__input-row">
           <input
+            ref={inputRef}
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
-            placeholder="피드백 작성 후 Enter"
+            placeholder="피드백 입력 후 Enter"
             className="feedback__input"
           />
-          <button className="btn btn--sm btn--primary" onClick={handleSubmit} disabled={saving || !text.trim()}>
+          <button
+            className="btn btn--sm btn--primary"
+            onClick={handleSubmit}
+            disabled={saving || !text.trim()}
+          >
             <Send size={14} />
           </button>
         </div>

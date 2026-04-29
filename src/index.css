@@ -112,6 +112,22 @@ body { margin: 0; }
   padding: 3px 10px; border-radius: 99px;
 }
 
+/* ── Save Indicator ── */
+.save-indicator {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 500;
+  padding: 3px 10px; border-radius: 99px;
+  transition: opacity 0.2s;
+  animation: save-fade-in 0.18s ease;
+}
+@keyframes save-fade-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.save-indicator--saving { color: var(--text-muted); background: var(--bg); }
+.save-indicator--saved  { color: var(--success); background: #f0fdf4; }
+.save-indicator--error  { color: var(--danger);  background: #fef2f2; }
+
 /* ── Stats Bar ── */
 .stats-bar {
   display: flex; align-items: center; gap: 16px;
@@ -202,13 +218,20 @@ body { margin: 0; }
 }
 
 /* ── Table ── */
-.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.table-wrap {
+  overflow: auto;
+  max-height: calc(100vh - 220px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
 .table { width: 100%; border-collapse: collapse; font-size: 13px; }
 
 .th {
   padding: 10px 12px; text-align: left; font-weight: 600;
   background: var(--bg); border-bottom: 1px solid var(--border);
   white-space: nowrap; color: var(--text-muted); font-size: 12px;
+  position: sticky; top: 0; z-index: 2;
 }
 .th--title { min-width: 200px; }
 .th--date { width: 120px; }
@@ -224,6 +247,10 @@ body { margin: 0; }
 .posting-row--urgent:hover > td { background: #fee2e2 !important; }
 .posting-row--soon > td { background: #fffbeb !important; }
 .posting-row--soon:hover > td { background: #fef3c7 !important; }
+/* 마감 지난 공고: 흐리게 (입력은 가능, 인터랙션 시 풀-투명) */
+.posting-row--expired > td { opacity: 0.55; }
+.posting-row--expired:hover > td,
+.posting-row--expired:focus-within > td { opacity: 1; }
 
 .cell { padding: 8px 12px; vertical-align: middle; }
 .cell--title { max-width: 240px; }
@@ -249,6 +276,12 @@ body { margin: 0; }
 }
 .cell__edit:hover { border-color: var(--border); }
 .cell__edit:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 2px rgba(79,70,229,0.1); }
+/* 빈 값일 때 입력 가능하다는 시각 hint */
+.cell__edit:placeholder-shown:not(:focus) {
+  border-bottom: 1px dashed #d1d5db;
+  border-radius: 4px 4px 0 0;
+}
+.cell__edit::placeholder { color: #cbd5e1; font-style: italic; }
 .cell__edit--date { width: 110px; }
 .cell__edit--score { width: 52px; text-align: center; }
 
@@ -302,7 +335,14 @@ body { margin: 0; }
 }
 
 /* ── Feedback ── */
-.feedback { padding: 16px 20px; }
+.feedback { padding: 16px 20px; position: relative; }
+.feedback__close {
+  position: absolute; top: 10px; right: 12px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); padding: 4px; border-radius: 4px;
+  display: flex; align-items: center; transition: all 0.15s;
+}
+.feedback__close:hover { color: var(--text); background: var(--bg); }
 .feedback__empty {
   font-size: 13px; color: var(--text-muted);
   margin: 0 0 12px; font-style: italic;
@@ -384,3 +424,33 @@ body { margin: 0; }
 /* ── Spinner ── */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 0.8s linear infinite; }
+
+/* ── Mobile (< 640px) ── */
+@media (max-width: 640px) {
+  /* 학생 컬럼은 강사가 PC에서 주로 쓰는 정보 */
+  .th--student, .cell--student { display: none; }
+  /* 등록일/비고는 좁은 화면에서 우선순위 낮음 */
+  .th--notes, .cell--notes { display: none; }
+  /* 헤더/툴바 padding 줄이기 */
+  .app__header { padding: 10px 12px; }
+  .toolbar { padding: 8px 12px; }
+  .stats-bar { padding: 6px 12px; gap: 10px; flex-wrap: wrap; }
+  .app__main { padding: 12px; }
+  /* 검색창은 풀-너비 */
+  .search-wrap { margin-left: 0; flex: 1; }
+  .search-input { width: 100%; }
+  .search-input:focus { width: 100%; }
+  /* 제목 한 줄로 짧게 */
+  .app__title { font-size: 16px; }
+  .app__user-badge { font-size: 12px; }
+  /* 테이블 자체는 가로 스크롤 가능 */
+  .th--title { min-width: 140px; }
+  .cell--title { max-width: 160px; }
+  /* sticky max-height 조정 (헤더 컴팩트해진 만큼 더 사용) */
+  .table-wrap { max-height: calc(100vh - 180px); }
+}
+
+/* ── Tablet (641-900px) ── */
+@media (min-width: 641px) and (max-width: 900px) {
+  .cell--notes, .th--notes { display: none; }
+}

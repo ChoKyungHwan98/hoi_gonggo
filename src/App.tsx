@@ -1,16 +1,34 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, LogOut, Search, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, LogOut, Search, ChevronUp, ChevronDown, Check, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import NameSelector from './components/NameSelector';
 import AddPostingModal from './components/AddPostingModal';
 import PostingRow from './components/PostingRow';
+import { daysUntil } from './lib/deadline';
+import { SaveStatusProvider, useSaveStatus } from './contexts/SaveStatusContext';
 import type { User, JobPosting } from './types';
 import './App.css';
+
+function SaveIndicator() {
+  const { status } = useSaveStatus();
+  if (status === 'idle') return null;
+  if (status === 'saving') return <span className="save-indicator save-indicator--saving"><Loader2 size={12} className="spin" /> 저장 중</span>;
+  if (status === 'saved') return <span className="save-indicator save-indicator--saved"><Check size={12} /> 저장됨</span>;
+  return <span className="save-indicator save-indicator--error"><AlertCircle size={12} /> 저장 실패</span>;
+}
 
 type SortField = 'job_deadline_date' | 'interest_score' | 'created_at' | 'status';
 type SortDir = 'asc' | 'desc';
 
 export default function App() {
+  return (
+    <SaveStatusProvider>
+      <AppContent />
+    </SaveStatusProvider>
+  );
+}
+
+function AppContent() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [postings, setPostings] = useState<JobPosting[]>([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -40,14 +58,24 @@ export default function App() {
     if (!currentUser) return;
     fetchPostings(currentUser);
 
-    const channel = supabase
+    const postingsChannel = supabase
       .channel('job_postings_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'job_postings' }, () => {
         fetchPostings(currentUser, true);
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    const feedbackChannel = supabase
+      .channel('feedback_count_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'feedback' }, () => {
+        fetchPostings(currentUser, true);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(postingsChannel);
+      supabase.removeChannel(feedbackChannel);
+    };
   }, [currentUser, fetchPostings]);
 
   const handleSort = (field: SortField) => {
@@ -99,9 +127,8 @@ export default function App() {
   const isInstructor = currentUser.role === 'instructor';
 
   const urgentCount = postings.filter(p => {
-    if (!p.job_deadline_date) return false;
-    const diff = (new Date(p.job_deadline_date).getTime() - Date.now()) / 86400000;
-    return diff >= 0 && diff <= 7;
+    const diff = daysUntil(p.job_deadline_date);
+    return diff !== null && diff >= 0 && diff <= 7;
   }).length;
 
   const feedbackPendingCount = postings.filter(p => (p.feedback?.length ?? 0) === 0).length;
@@ -122,6 +149,7 @@ export default function App() {
             {currentUser.name}
             {isInstructor && ' (강사)'}
           </span>
+          <SaveIndicator />
         </div>
         <div className="app__header-right">
           {!isInstructor && (
@@ -212,7 +240,7 @@ export default function App() {
             <table className="table">
               <thead>
                 <tr>
-                  {isInstructor && <th className="th">학생</th>}
+                  {isInstructor && <th className="th th--student">학생</th>}
                   <th className="th th--title">공고명</th>
                   <th className="th">회사</th>
                   <th className="th">직무</th>

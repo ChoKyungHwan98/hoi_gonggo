@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ExternalLink, Trash2, MessageSquare } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import FeedbackPanel from './FeedbackPanel';
+import { deadlineUrgency, getDday, isExpired } from '../lib/deadline';
+import { useSaveStatus } from '../contexts/SaveStatusContext';
 import type { JobPosting, User } from '../types';
 
 interface Props {
@@ -24,44 +26,56 @@ const statusStyle = (s: string | null) => {
   }
 };
 
-const deadlineUrgency = (dateStr: string | null): 'urgent' | 'soon' | null => {
-  if (!dateStr) return null;
-  const diff = (new Date(dateStr).getTime() - Date.now()) / 86400000;
-  if (diff < 0) return null;
-  if (diff <= 3) return 'urgent';
-  if (diff <= 7) return 'soon';
-  return null;
-};
-
-const getDday = (dateStr: string | null): string | null => {
-  if (!dateStr) return null;
-  const diff = Math.ceil((new Date(dateStr).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000);
-  if (diff < 0) return '마감';
-  if (diff === 0) return 'D-Day';
-  return `D-${diff}`;
-};
-
 export default function PostingRow({ posting, currentUser, isInstructor, onDeleted }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState<Partial<JobPosting>>({});
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const { setStatus: setSaveStatus } = useSaveStatus();
+
+  // 언마운트 시 pending timer 정리 + 즉시 flush 시도
+  useEffect(() => {
+    return () => {
+      Object.values(debounceTimers.current).forEach(clearTimeout);
+    };
+  }, []);
 
   const val = <K extends keyof JobPosting>(key: K): JobPosting[K] =>
     key in editing ? (editing[key] as JobPosting[K]) : posting[key];
 
-  const update = async (key: keyof JobPosting, value: string | number | null) => {
-    const dbValue = (value === '' || value === null || value === undefined) ? null : value;
-    setEditing((prev) => ({ ...prev, [key]: dbValue }));
+  const writeToDb = async (key: keyof JobPosting, dbValue: string | number | null) => {
+    setSaveStatus('saving');
     const { error } = await supabase
       .from('job_postings')
       .update({ [key]: dbValue })
       .eq('id', posting.id);
     if (error) {
+      setSaveStatus('error');
       // 실패 시 로컬 상태 롤백
       setEditing((prev) => {
         const next = { ...prev };
         delete next[key];
         return next;
       });
+    } else {
+      setSaveStatus('saved');
+    }
+  };
+
+  // debounceMs > 0: 텍스트 입력처럼 연속 발생하는 변경 (회사명, 직무, 비고)
+  // debounceMs = 0: 즉시 반영 (status, score, 날짜)
+  const update = (key: keyof JobPosting, value: string | number | null, debounceMs = 0) => {
+    const dbValue = (value === '' || value === null || value === undefined) ? null : value;
+    setEditing((prev) => ({ ...prev, [key]: dbValue }));
+
+    if (debounceTimers.current[key]) clearTimeout(debounceTimers.current[key]);
+
+    if (debounceMs > 0) {
+      debounceTimers.current[key] = setTimeout(() => {
+        writeToDb(key, dbValue);
+        delete debounceTimers.current[key];
+      }, debounceMs);
+    } else {
+      writeToDb(key, dbValue);
     }
   };
 
@@ -83,10 +97,11 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
   const deadlineDateVal = val('job_deadline_date') as string | null;
   const urgency = deadlineUrgency(deadlineDateVal);
   const dday = getDday(deadlineDateVal);
+  const expired = isExpired(deadlineDateVal);
 
   return (
     <>
-      <tr className={`posting-row ${urgency ? `posting-row--${urgency}` : ''}`}>
+      <tr className={`posting-row ${urgency ? `posting-row--${urgency}` : ''} ${expired ? 'posting-row--expired' : ''}`}>
         {isInstructor && (
           <td className="cell cell--student">
             {posting.user?.name ?? '—'}
@@ -105,7 +120,7 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
             <input
               className="cell__edit"
               value={(val('company') as string) ?? ''}
-              onChange={(e) => update('company', e.target.value)}
+              onChange={(e) => update('company', e.target.value, 400)}
               placeholder="회사명"
             />
           )}
@@ -117,7 +132,7 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
             <input
               className="cell__edit"
               value={(val('job_type') as string) ?? ''}
-              onChange={(e) => update('job_type', e.target.value)}
+              onChange={(e) => update('job_type', e.target.value, 400)}
               placeholder="직무"
             />
           )}
@@ -202,7 +217,7 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
             <input
               className="cell__edit"
               value={(val('notes') as string) ?? ''}
-              onChange={(e) => update('notes', e.target.value)}
+              onChange={(e) => update('notes', e.target.value, 400)}
               placeholder="비고"
             />
           )}

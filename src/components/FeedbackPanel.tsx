@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Trash2 } from 'lucide-react';
+import { Send, Trash2, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import type { User, Feedback } from '../types';
 
@@ -83,6 +83,11 @@ export default function FeedbackPanel({ postingId, currentUser, onClose }: Props
 
   return (
     <div className="feedback">
+      {onClose && (
+        <button className="feedback__close" onClick={onClose} title="닫기 (Esc)">
+          <X size={14} />
+        </button>
+      )}
       {feedbacks.length === 0 ? (
         <p className="feedback__empty">
           {isInstructor

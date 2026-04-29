@@ -33,6 +33,14 @@ const deadlineUrgency = (dateStr: string | null): 'urgent' | 'soon' | null => {
   return null;
 };
 
+const getDday = (dateStr: string | null): string | null => {
+  if (!dateStr) return null;
+  const diff = Math.ceil((new Date(dateStr).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000);
+  if (diff < 0) return '마감';
+  if (diff === 0) return 'D-Day';
+  return `D-${diff}`;
+};
+
 export default function PostingRow({ posting, currentUser, isInstructor, onDeleted }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState<Partial<JobPosting>>({});
@@ -72,7 +80,9 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
 
   const colSpan = isInstructor ? 10 : 9;
   const feedbackCount = posting.feedback?.length ?? 0;
-  const urgency = deadlineUrgency(val('job_deadline_date') as string | null);
+  const deadlineDateVal = val('job_deadline_date') as string | null;
+  const urgency = deadlineUrgency(deadlineDateVal);
+  const dday = getDday(deadlineDateVal);
 
   return (
     <>
@@ -142,28 +152,28 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
         <td className="cell cell--date">
           {isInstructor ? (
             <div className="deadline-cell">
-              {urgency && (
-                <span className={`deadline-urgency deadline-urgency--${urgency}`}>
-                  {urgency === 'urgent' ? '마감 임박!' : '마감 7일'}
-                </span>
-              )}
-              {val('job_deadline_date') && <span>{val('job_deadline_date') as string}</span>}
+              <div className="deadline-cell__row">
+                {deadlineDateVal && <span className="deadline-date">{deadlineDateVal}</span>}
+                {dday && (
+                  <span className={`dday-badge ${urgency ? `dday-badge--${urgency}` : ''}`}>{dday}</span>
+                )}
+              </div>
               {val('deadline_text') && <span className="deadline-badge">{val('deadline_text') as string}</span>}
-              {!val('job_deadline_date') && !val('deadline_text') && <span>—</span>}
+              {!deadlineDateVal && !val('deadline_text') && <span>—</span>}
             </div>
           ) : (
             <div className="deadline-cell">
-              {urgency && (
-                <span className={`deadline-urgency deadline-urgency--${urgency}`}>
-                  {urgency === 'urgent' ? '마감 임박!' : '마감 7일'}
-                </span>
-              )}
-              <input
-                type="date"
-                className="cell__edit cell__edit--date"
-                value={(val('job_deadline_date') as string) ?? ''}
-                onChange={(e) => update('job_deadline_date', e.target.value)}
-              />
+              <div className="deadline-cell__row">
+                <input
+                  type="date"
+                  className="cell__edit cell__edit--date"
+                  value={deadlineDateVal ?? ''}
+                  onChange={(e) => update('job_deadline_date', e.target.value)}
+                />
+                {dday && (
+                  <span className={`dday-badge ${urgency ? `dday-badge--${urgency}` : ''}`}>{dday}</span>
+                )}
+              </div>
               {val('deadline_text') && (
                 <span className="deadline-badge">{val('deadline_text') as string}</span>
               )}
@@ -217,7 +227,7 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
       {expanded && (
         <tr className="posting-row__feedback-row">
           <td colSpan={colSpan}>
-            <FeedbackPanel postingId={posting.id} currentUser={currentUser} />
+            <FeedbackPanel postingId={posting.id} currentUser={currentUser} onClose={() => setExpanded(false)} />
           </td>
         </tr>
       )}

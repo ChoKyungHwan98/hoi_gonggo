@@ -280,11 +280,10 @@ body { margin: 0; }
 .feedback__delete {
   margin-left: auto;
   background: none; border: none; cursor: pointer;
-  color: var(--text-muted); padding: 2px; border-radius: 3px;
-  display: flex; align-items: center; opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  color: #d1d5db; padding: 2px 4px; border-radius: 3px;
+  display: flex; align-items: center;
+  transition: color 0.15s;
 }
-.feedback__bubble:hover .feedback__delete { opacity: 1; }
 .feedback__delete:hover { color: var(--danger); }
 
 .feedback__input-row { display: flex; gap: 8px; }

@@ -170,7 +170,7 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
               <div className="deadline-cell__row">
                 {deadlineDateVal && <span className="deadline-date">{deadlineDateVal}</span>}
                 {dday && (
-                  <span className={`dday-badge ${urgency ? `dday-badge--${urgency}` : ''}`}>{dday}</span>
+                  <span className={`dday-badge ${expired ? 'dday-badge--expired' : urgency ? `dday-badge--${urgency}` : ''}`}>{dday}</span>
                 )}
               </div>
               {val('deadline_text') && <span className="deadline-badge">{val('deadline_text') as string}</span>}
@@ -186,7 +186,7 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
                   onChange={(e) => update('job_deadline_date', e.target.value)}
                 />
                 {dday && (
-                  <span className={`dday-badge ${urgency ? `dday-badge--${urgency}` : ''}`}>{dday}</span>
+                  <span className={`dday-badge ${expired ? 'dday-badge--expired' : urgency ? `dday-badge--${urgency}` : ''}`}>{dday}</span>
                 )}
               </div>
               {val('deadline_text') && (

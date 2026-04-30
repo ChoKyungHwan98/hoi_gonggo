@@ -247,10 +247,13 @@ body { margin: 0; }
 .posting-row--urgent:hover > td { background: #fee2e2 !important; }
 .posting-row--soon > td { background: #fffbeb !important; }
 .posting-row--soon:hover > td { background: #fef3c7 !important; }
-/* 마감 지난 공고: 흐리게 (입력은 가능, 인터랙션 시 풀-투명) */
-.posting-row--expired > td { opacity: 0.55; }
-.posting-row--expired:hover > td,
-.posting-row--expired:focus-within > td { opacity: 1; }
+/* 마감 지난 공고: 데이터는 흐리게, 마감 뱃지는 또렷이 (강사 인지가 우선) */
+.posting-row--expired > td { background: #fafafa; }
+.posting-row--expired > td > * { opacity: 0.55; transition: opacity 0.15s; }
+.posting-row--expired > td .dday-badge,
+.posting-row--expired > td .deadline-badge { opacity: 1; }
+.posting-row--expired:hover > td > *,
+.posting-row--expired:focus-within > td > * { opacity: 1; }
 
 .cell { padding: 8px 12px; vertical-align: middle; }
 .cell--title { max-width: 240px; }
@@ -322,12 +325,28 @@ body { margin: 0; }
   white-space: nowrap; width: fit-content;
 }
 .dday-badge {
-  font-size: 10px; font-weight: 700; padding: 1px 6px;
-  border-radius: 99px; white-space: nowrap;
+  display: inline-flex; align-items: center;
+  font-size: 12px; font-weight: 700;
+  padding: 3px 10px; border-radius: 99px;
+  letter-spacing: 0.02em; white-space: nowrap;
   background: var(--bg); color: var(--text-muted); border: 1px solid var(--border);
 }
-.dday-badge--urgent { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
-.dday-badge--soon { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.dday-badge--urgent {
+  background: var(--danger); color: #fff; border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  animation: dday-pulse 1.6s ease-in-out infinite;
+}
+@keyframes dday-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); }
+  50%      { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.05); }
+}
+.dday-badge--soon {
+  background: var(--warn); color: #fff; border-color: var(--warn);
+}
+.dday-badge--expired {
+  background: #1f2937; color: #fff; border-color: #1f2937;
+  text-decoration: line-through; text-decoration-thickness: 1.5px;
+}
 
 .posting-row__feedback-row td {
   padding: 0; background: #f8f8fc;

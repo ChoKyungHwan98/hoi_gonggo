@@ -95,9 +95,11 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
   const colSpan = isInstructor ? 10 : 9;
   const feedbackCount = posting.feedback?.length ?? 0;
   const deadlineDateVal = val('job_deadline_date') as string | null;
-  const urgency = deadlineUrgency(deadlineDateVal);
-  const dday = getDday(deadlineDateVal);
-  const expired = isExpired(deadlineDateVal);
+  const deadlineTextVal = val('deadline_text') as string | null;
+  // 텍스트("채용시 마감" 등)가 있으면 날짜 기반 상태는 무시 — 만료 아님
+  const urgency = deadlineTextVal ? null : deadlineUrgency(deadlineDateVal);
+  const dday = deadlineTextVal ? null : getDday(deadlineDateVal);
+  const expired = !deadlineTextVal && isExpired(deadlineDateVal);
 
   return (
     <>
@@ -166,13 +168,12 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
         </td>
         <td className="cell cell--date">
           {(() => {
-            const deadlineText = val('deadline_text') as string | null;
             // 텍스트가 있으면 그것만 표시 (날짜/D-day 무시 — 채용시 마감 같은 케이스)
-            if (deadlineText) {
+            if (deadlineTextVal) {
               return (
                 <div className="deadline-cell">
                   <span className="deadline-badge deadline-badge--primary">
-                    {deadlineText}
+                    {deadlineTextVal}
                     {!isInstructor && (
                       <button
                         className="deadline-badge__clear"

@@ -92,6 +92,23 @@ function AppContent() {
     return [...new Set(names)];
   }, [postings]);
 
+  // 사용자별로 등록 순서(created_at 오름차순) 번호 부여 — 처음 등록한 게 #1
+  // 정렬/필터/검색에 영향 받지 않는 영구 번호 (id처럼 고정)
+  const postingNumberMap = useMemo(() => {
+    const byUser: Record<string, JobPosting[]> = {};
+    for (const p of postings) {
+      (byUser[p.user_id] ||= []).push(p);
+    }
+    const m = new Map<string, number>();
+    for (const uid in byUser) {
+      byUser[uid]
+        .slice()
+        .sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''))
+        .forEach((p, i) => m.set(p.id, i + 1));
+    }
+    return m;
+  }, [postings]);
+
   const displayedPostings = useMemo(() => {
     let result = filterStudent
       ? postings.filter(p => p.user?.name === filterStudent)
@@ -265,10 +282,10 @@ function AppContent() {
                 </tr>
               </thead>
               <tbody>
-                {displayedPostings.map((p, i) => (
+                {displayedPostings.map((p) => (
                   <PostingRow
                     key={p.id}
-                    index={i + 1}
+                    index={postingNumberMap.get(p.id) ?? 0}
                     posting={p}
                     currentUser={currentUser}
                     isInstructor={isInstructor}

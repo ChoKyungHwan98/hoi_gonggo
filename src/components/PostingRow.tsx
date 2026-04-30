@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { ExternalLink, Trash2, MessageSquare } from 'lucide-react';
+import { ExternalLink, Trash2, MessageSquare, BookOpen } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import FeedbackPanel from './FeedbackPanel';
+import AnalysisPanel from './AnalysisPanel';
 import { deadlineUrgency, getDday, isExpired } from '../lib/deadline';
 import { useSaveStatus } from '../contexts/SaveStatusContext';
 import type { JobPosting, User } from '../types';
@@ -27,7 +28,7 @@ const statusStyle = (s: string | null) => {
 };
 
 export default function PostingRow({ posting, currentUser, isInstructor, onDeleted }: Props) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState<'feedback' | 'analysis' | null>(null);
   const [editing, setEditing] = useState<Partial<JobPosting>>({});
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const { setStatus: setSaveStatus } = useSaveStatus();
@@ -257,8 +258,15 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
         </td>
         <td className="cell cell--actions">
           <button
-            className={`btn btn--feedback ${expanded ? 'btn--active' : ''} ${feedbackCount > 0 ? 'btn--has-feedback' : ''}`}
-            onClick={() => setExpanded(!expanded)}
+            className={`btn btn--analysis ${expanded === 'analysis' ? 'btn--active' : ''} ${(posting.keywords || posting.analysis) ? 'btn--has-analysis' : ''}`}
+            onClick={() => setExpanded(expanded === 'analysis' ? null : 'analysis')}
+            title="분석 / 키워드"
+          >
+            <BookOpen size={14} />
+          </button>
+          <button
+            className={`btn btn--feedback ${expanded === 'feedback' ? 'btn--active' : ''} ${feedbackCount > 0 ? 'btn--has-feedback' : ''}`}
+            onClick={() => setExpanded(expanded === 'feedback' ? null : 'feedback')}
             title={feedbackCount > 0 ? `피드백 ${feedbackCount}개` : '피드백'}
           >
             <MessageSquare size={14} />
@@ -272,10 +280,24 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
         </td>
       </tr>
 
-      {expanded && (
+      {expanded === 'feedback' && (
         <tr className="posting-row__feedback-row">
           <td colSpan={colSpan}>
-            <FeedbackPanel postingId={posting.id} currentUser={currentUser} onClose={() => setExpanded(false)} />
+            <FeedbackPanel postingId={posting.id} currentUser={currentUser} onClose={() => setExpanded(null)} />
+          </td>
+        </tr>
+      )}
+
+      {expanded === 'analysis' && (
+        <tr className="posting-row__feedback-row">
+          <td colSpan={colSpan}>
+            <AnalysisPanel
+              postingId={posting.id}
+              initialKeywords={posting.keywords}
+              initialAnalysis={posting.analysis}
+              readOnly={isInstructor || currentUser.id !== posting.user_id}
+              onClose={() => setExpanded(null)}
+            />
           </td>
         </tr>
       )}

@@ -17,6 +17,8 @@ export interface JobPosting {
   deadline_text: string | null;
   interest_score: number | null;
   notes: string | null;
+  keywords: string | null;
+  analysis: string | null;
   created_at: string;
   status: string | null;
   user?: { name: string } | null;

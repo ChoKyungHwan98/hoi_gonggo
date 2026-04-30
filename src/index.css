@@ -43,8 +43,8 @@ body { margin: 0; }
 .btn--sm { padding: 4px 10px; font-size: 12px; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Feedback button ── */
-.btn--feedback {
+/* ── Feedback / Analysis button ── */
+.btn--feedback, .btn--analysis {
   position: relative;
   padding: 5px 8px;
   color: var(--text-muted);
@@ -53,6 +53,10 @@ body { margin: 0; }
 .btn--feedback:hover { color: var(--accent); }
 .btn--has-feedback { color: var(--accent); border-color: var(--accent-light); background: var(--accent-light); }
 .btn--has-feedback:hover { background: #dde4ff; }
+
+.btn--analysis:hover { color: #0d9488; }
+.btn--has-analysis { color: #0d9488; border-color: #ccfbf1; background: #f0fdfa; }
+.btn--has-analysis:hover { background: #ccfbf1; }
 
 .feedback-badge {
   position: absolute;
@@ -237,7 +241,7 @@ body { margin: 0; }
 .th--date { width: 120px; }
 .th--score { width: 70px; text-align: center; }
 .th--notes { min-width: 140px; }
-.th--actions { width: 72px; }
+.th--actions { width: 110px; }
 .th--status { width: 90px; }
 
 .posting-row { border-bottom: 1px solid var(--border); transition: background 0.1s; }
@@ -260,7 +264,7 @@ body { margin: 0; }
 .cell--date { width: 120px; }
 .cell--score { text-align: center; }
 .cell--notes { max-width: 180px; }
-.cell--actions { width: 72px; }
+.cell--actions { width: 110px; }
 .cell--status { width: 90px; }
 .cell--student { color: var(--text-muted); font-weight: 500; white-space: nowrap; }
 
@@ -417,6 +421,67 @@ body { margin: 0; }
   background: var(--surface);
 }
 .feedback__input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(79,70,229,0.1); }
+
+/* ── Analysis Panel ── */
+.analysis { padding: 18px 22px; position: relative; display: flex; flex-direction: column; gap: 18px; }
+.analysis__close {
+  position: absolute; top: 10px; right: 12px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); padding: 4px; border-radius: 4px;
+  display: flex; align-items: center; transition: all 0.15s;
+}
+.analysis__close:hover { color: var(--text); background: var(--bg); }
+
+.analysis__section { display: flex; flex-direction: column; gap: 6px; }
+.analysis__label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--text-muted); text-transform: uppercase;
+}
+.analysis__hint {
+  font-size: 11px; color: var(--text-muted); margin: 4px 0 0;
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.analysis__readonly {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 12px;
+  font-size: 13px; line-height: 1.6; color: var(--text);
+  white-space: pre-wrap; min-height: 60px;
+}
+.analysis__empty { color: var(--text-muted); font-style: italic; font-size: 12px; }
+.analysis__textarea {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); font-size: 13px; line-height: 1.6;
+  font-family: inherit; color: var(--text); resize: vertical; min-height: 120px;
+}
+.analysis__textarea:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 2px rgba(13,148,136,0.12); }
+
+.analysis__chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 6px; min-height: 40px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.kw-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 4px 3px 10px; border-radius: 99px;
+  background: #ccfbf1; color: #0f766e; border: 1px solid #5eead4;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.kw-chip__remove {
+  background: rgba(15,118,110,0.18); border: none; cursor: pointer;
+  width: 16px; height: 16px; padding: 0; border-radius: 99px;
+  font-size: 12px; line-height: 1; color: #0f766e;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.kw-chip__remove:hover { background: rgba(15,118,110,0.35); }
+.kw-chip__input {
+  flex: 1; min-width: 100px;
+  border: none; background: transparent; outline: none;
+  font-size: 12px; font-family: inherit; color: var(--text);
+  padding: 3px 6px;
+}
+.kw-chip__input::placeholder { color: var(--text-muted); }
 
 /* ── Modal ── */
 .modal-overlay {

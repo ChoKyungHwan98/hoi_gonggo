@@ -30,6 +30,8 @@ CREATE TABLE job_postings (
   job_deadline_date DATE,
   interest_score    INTEGER CHECK (interest_score BETWEEN 1 AND 10),
   notes             TEXT,
+  keywords          TEXT,
+  analysis          TEXT,
   created_at        TIMESTAMPTZ DEFAULT now()
 );
 

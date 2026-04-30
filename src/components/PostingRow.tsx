@@ -278,7 +278,7 @@ export default function PostingRow({ posting, index, currentUser, isInstructor, 
           {!isInstructor && currentUser.id === posting.user_id && (
             <button
               className="btn btn--icon btn--danger btn--delete-spaced"
-              onClick={() => setShowDeleteConfirm(true)}
+              onClick={() => { setExpanded(null); setShowDeleteConfirm(true); }}
               title="삭제"
             >
               <Trash2 size={16} />

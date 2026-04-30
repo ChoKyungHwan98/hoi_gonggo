@@ -28,6 +28,13 @@ export default function AnalysisPanel({ postingId, initialKeywords, initialAnaly
   // 초기값은 mount 시 한 번만. realtime fetch가 typing 중에 prop을 갱신해도
   // 로컬 state를 덮어쓰지 않게 — 사용자 입력이 우선. 패널 닫고 다시 열면 fresh.
 
+  // 패널 열리면 키워드 입력칸 자동 포커싱
+  useEffect(() => {
+    if (!readOnly) {
+      setTimeout(() => inputRef.current?.focus(), 80);
+    }
+  }, [readOnly]);
+
   // Esc 닫기
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
@@ -52,8 +59,22 @@ export default function AnalysisPanel({ postingId, initialKeywords, initialAnaly
 
   const addKeyword = (raw: string) => {
     const clean = raw.trim().replace(/,$/, '').trim();
-    if (!clean) return;
-    if (keywords.includes(clean)) return;
+    if (!clean) {
+      setDraft('');
+      return;
+    }
+    if (keywords.includes(clean)) {
+      // 중복: draft만 비우고 기존 칩을 잠깐 강조하는 신호 (간단히 input 흔들기)
+      setDraft('');
+      const el = inputRef.current;
+      if (el) {
+        el.classList.remove('kw-chip__input--shake');
+        // 강제 reflow로 애니메이션 재시작
+        void el.offsetWidth;
+        el.classList.add('kw-chip__input--shake');
+      }
+      return;
+    }
     const next = [...keywords, clean];
     setKeywords(next);
     setDraft('');

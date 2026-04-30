@@ -531,6 +531,12 @@ body { margin: 0; }
   padding: 3px 6px;
 }
 .kw-chip__input::placeholder { color: var(--text-muted); }
+.kw-chip__input--shake { animation: kw-shake 0.3s ease; }
+@keyframes kw-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
 
 /* ── Modal ── */
 .modal-overlay {

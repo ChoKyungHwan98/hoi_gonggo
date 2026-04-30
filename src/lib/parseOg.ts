@@ -98,19 +98,65 @@ export async function parseOgFromUrl(url: string): Promise<OgData> {
       title = parsed.title || ogTitle;
     }
 
-    // 등록일 (gamejob 전용)
-    const postedMatch = html.match(/class=["']date["'][^>]*>(\d{4}-\d{2}-\d{2})[^<]*등록/i);
-    const postedDate = postedMatch ? postedMatch[1] : '';
+    // 사이트별 셀렉터로 먼저 시도 (정확도 ↑)
+    const hostname = (() => {
+      try { return new URL(url).hostname; } catch { return ''; }
+    })();
 
-    // 수정일/갱신일 (gamejob 전용)
-    const updatedMatch = html.match(/class=["']date["'][^>]*>(\d{4}-\d{2}-\d{2})[^<]*수정/i);
-    const updatedDate = updatedMatch ? updatedMatch[1] : '';
+    let postedDate = '';
+    let updatedDate = '';
+    let deadlineDate = '';
+    let deadlineText = '';
 
-    // 마감일 (gamejob 전용)
-    const deadlineTagMatch = html.match(/class=["']end-date["'][^>]*>([^<]+)</i);
-    const deadlineRaw = deadlineTagMatch ? deadlineTagMatch[1].trim() : '';
-    const deadlineDate = extractDate(deadlineRaw);
-    const deadlineText = deadlineRaw && !extractDate(deadlineRaw) ? deadlineRaw : '';
+    if (hostname.includes('gamejob')) {
+      // gamejob 전용 셀렉터
+      const postedMatch = html.match(/class=["']date["'][^>]*>(\d{4}-\d{2}-\d{2})[^<]*등록/i);
+      postedDate = postedMatch ? postedMatch[1] : '';
+
+      const updatedMatch = html.match(/class=["']date["'][^>]*>(\d{4}-\d{2}-\d{2})[^<]*수정/i);
+      updatedDate = updatedMatch ? updatedMatch[1] : '';
+
+      const deadlineTagMatch = html.match(/class=["']end-date["'][^>]*>([^<]+)</i);
+      const deadlineRaw = deadlineTagMatch ? deadlineTagMatch[1].trim() : '';
+      deadlineDate = extractDate(deadlineRaw);
+      deadlineText = deadlineRaw && !extractDate(deadlineRaw) ? deadlineRaw : '';
+    } else {
+      // 범용 한국어 패턴 (펄어비스 같은 일반 채용 페이지)
+      // 날짜 정규식: YYYY.MM.DD / YYYY-MM-DD / YYYY/MM/DD
+      const dateRe = /(\d{4})[./-](\d{1,2})[./-](\d{1,2})/;
+      const norm = (m: RegExpMatchArray | null) =>
+        m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : '';
+
+      // 등록일/공고일/게시일
+      const postedM = html.match(/(?:등록일|공고일|게시일|작성일|발행일)[\s:：]*(\d{4})[./-](\d{1,2})[./-](\d{1,2})/i);
+      postedDate = norm(postedM);
+
+      // 수정일/갱신일
+      const updatedM = html.match(/(?:수정일|갱신일|업데이트일)[\s:：]*(\d{4})[./-](\d{1,2})[./-](\d{1,2})/i);
+      updatedDate = norm(updatedM);
+
+      // 마감일 (단일 날짜)
+      const deadlineM = html.match(/(?:마감일|마감)[\s:：]*(\d{4})[./-](\d{1,2})[./-](\d{1,2})/i);
+      deadlineDate = norm(deadlineM);
+
+      // 지원기간: YYYY.MM.DD ~ YYYY.MM.DD → posted=시작, deadline=끝
+      if (!deadlineDate || !postedDate) {
+        const rangeM = html.match(/(?:지원기간|모집기간|채용기간|접수기간)[\s:：]*(\d{4})[./-](\d{1,2})[./-](\d{1,2})\s*[~∼~\-–]\s*(\d{4})[./-](\d{1,2})[./-](\d{1,2})/i);
+        if (rangeM) {
+          if (!postedDate) postedDate = `${rangeM[1]}-${rangeM[2].padStart(2, '0')}-${rangeM[3].padStart(2, '0')}`;
+          if (!deadlineDate) deadlineDate = `${rangeM[4]}-${rangeM[5].padStart(2, '0')}-${rangeM[6].padStart(2, '0')}`;
+        }
+      }
+
+      // 마감 텍스트 (상시채용 / 채용시 마감 등)
+      if (!deadlineDate) {
+        const textM = html.match(/(상시\s*채용|채용\s*시\s*마감|수시\s*채용|충원\s*시\s*마감)/);
+        if (textM) deadlineText = textM[1].replace(/\s+/g, ' ').trim();
+      }
+
+      // 마지막 보루: 임의 날짜 추출 시도하지 않음 (오탐 위험)
+      void dateRe;
+    }
 
     return { title, company, postedDate, updatedDate, deadlineDate, deadlineText };
   } catch {

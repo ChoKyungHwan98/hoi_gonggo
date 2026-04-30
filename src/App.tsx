@@ -267,11 +267,8 @@ function AppContent() {
                   <th className="th th--status th--sortable" onClick={() => handleSort('status')}>
                     상태 <SortIcon field="status" />
                   </th>
-                  <th className="th th--date th--sortable" onClick={() => handleSort('created_at')}>
-                    등록일 <SortIcon field="created_at" />
-                  </th>
-                  <th className="th th--date th--sortable th--updated" onClick={() => handleSort('job_updated_date')}>
-                    수정일 <SortIcon field="job_updated_date" />
+                  <th className="th th--date th--sortable" onClick={() => handleSort('job_updated_date')}>
+                    등록 / 수정 <SortIcon field="job_updated_date" />
                   </th>
                   <th className="th th--date th--sortable" onClick={() => handleSort('job_deadline_date')}>
                     마감일 <SortIcon field="job_deadline_date" />

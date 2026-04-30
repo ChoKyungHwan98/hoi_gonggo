@@ -95,7 +95,7 @@ export default function PostingRow({ posting, index, currentUser, isInstructor, 
     return 'score--low';
   };
 
-  const colSpan = isInstructor ? 12 : 11;
+  const colSpan = isInstructor ? 11 : 10;
   const feedbackCount = posting.feedback?.length ?? 0;
   const deadlineDateVal = val('job_deadline_date') as string | null;
   const deadlineTextVal = val('deadline_text') as string | null;
@@ -158,28 +158,34 @@ export default function PostingRow({ posting, index, currentUser, isInstructor, 
             </select>
           )}
         </td>
-        <td className="cell cell--date">
+        <td className="cell cell--date cell--posted-updated">
           {isInstructor ? (
-            <span>{val('job_posted_date') || '—'}</span>
+            <div className="posted-updated">
+              <span className="posted-updated__primary">{val('job_posted_date') || '—'}</span>
+              {val('job_updated_date') && (
+                <span className="posted-updated__secondary" title="수정일">
+                  ↻ {val('job_updated_date') as string}
+                </span>
+              )}
+            </div>
           ) : (
-            <input
-              type="date"
-              className="cell__edit cell__edit--date"
-              value={(val('job_posted_date') as string) ?? ''}
-              onChange={(e) => update('job_posted_date', e.target.value)}
-            />
-          )}
-        </td>
-        <td className="cell cell--date cell--updated">
-          {isInstructor ? (
-            <span>{val('job_updated_date') || '—'}</span>
-          ) : (
-            <input
-              type="date"
-              className="cell__edit cell__edit--date"
-              value={(val('job_updated_date') as string) ?? ''}
-              onChange={(e) => update('job_updated_date', e.target.value)}
-            />
+            <div className="posted-updated">
+              <input
+                type="date"
+                className="cell__edit cell__edit--date posted-updated__primary"
+                value={(val('job_posted_date') as string) ?? ''}
+                onChange={(e) => update('job_posted_date', e.target.value)}
+                title="등록일"
+              />
+              <input
+                type="date"
+                className="cell__edit cell__edit--date posted-updated__secondary"
+                value={(val('job_updated_date') as string) ?? ''}
+                onChange={(e) => update('job_updated_date', e.target.value)}
+                title="수정일"
+                placeholder="수정일"
+              />
+            </div>
           )}
         </td>
         <td className="cell cell--date">

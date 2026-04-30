@@ -26,6 +26,7 @@ CREATE TABLE job_postings (
   company           TEXT,
   job_type          TEXT,
   job_posted_date   DATE,
+  job_updated_date  DATE,
   job_deadline_date DATE,
   interest_score    INTEGER CHECK (interest_score BETWEEN 1 AND 10),
   notes             TEXT,

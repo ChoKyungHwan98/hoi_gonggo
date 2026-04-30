@@ -17,7 +17,7 @@ function SaveIndicator() {
   return <span className="save-indicator save-indicator--error"><AlertCircle size={12} /> 저장 실패</span>;
 }
 
-type SortField = 'job_deadline_date' | 'interest_score' | 'created_at' | 'status';
+type SortField = 'job_deadline_date' | 'interest_score' | 'created_at' | 'job_updated_date' | 'status';
 type SortDir = 'asc' | 'desc';
 
 export default function App() {
@@ -249,6 +249,9 @@ function AppContent() {
                   </th>
                   <th className="th th--date th--sortable" onClick={() => handleSort('created_at')}>
                     등록일 <SortIcon field="created_at" />
+                  </th>
+                  <th className="th th--date th--sortable th--updated" onClick={() => handleSort('job_updated_date')}>
+                    수정일 <SortIcon field="job_updated_date" />
                   </th>
                   <th className="th th--date th--sortable" onClick={() => handleSort('job_deadline_date')}>
                     마감일 <SortIcon field="job_deadline_date" />

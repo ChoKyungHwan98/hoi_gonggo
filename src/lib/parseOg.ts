@@ -2,6 +2,7 @@ interface OgData {
   title: string;
   company: string;
   postedDate: string;
+  updatedDate: string;
   deadlineDate: string;
   deadlineText: string;
 }
@@ -80,7 +81,7 @@ function parseCompanyAndTitle(rawTitle: string): { company: string; title: strin
 }
 
 export async function parseOgFromUrl(url: string): Promise<OgData> {
-  const empty: OgData = { title: '', company: '', postedDate: '', deadlineDate: '', deadlineText: '' };
+  const empty: OgData = { title: '', company: '', postedDate: '', updatedDate: '', deadlineDate: '', deadlineText: '' };
   try {
     const html = await fetchHtml(url);
     if (!html) return empty;
@@ -101,16 +102,17 @@ export async function parseOgFromUrl(url: string): Promise<OgData> {
     const postedMatch = html.match(/class=["']date["'][^>]*>(\d{4}-\d{2}-\d{2})[^<]*등록/i);
     const postedDate = postedMatch ? postedMatch[1] : '';
 
-    // 갱신일 (gamejob 전용)
+    // 수정일/갱신일 (gamejob 전용)
     const updatedMatch = html.match(/class=["']date["'][^>]*>(\d{4}-\d{2}-\d{2})[^<]*수정/i);
+    const updatedDate = updatedMatch ? updatedMatch[1] : '';
 
     // 마감일 (gamejob 전용)
     const deadlineTagMatch = html.match(/class=["']end-date["'][^>]*>([^<]+)</i);
     const deadlineRaw = deadlineTagMatch ? deadlineTagMatch[1].trim() : '';
-    const deadlineDate = extractDate(deadlineRaw) || extractDate(updatedMatch?.[1] ?? '');
+    const deadlineDate = extractDate(deadlineRaw);
     const deadlineText = deadlineRaw && !extractDate(deadlineRaw) ? deadlineRaw : '';
 
-    return { title, company, postedDate, deadlineDate, deadlineText };
+    return { title, company, postedDate, updatedDate, deadlineDate, deadlineText };
   } catch {
     return empty;
   }

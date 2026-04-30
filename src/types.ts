@@ -12,6 +12,7 @@ export interface JobPosting {
   company: string | null;
   job_type: string | null;
   job_posted_date: string | null;
+  job_updated_date: string | null;
   job_deadline_date: string | null;
   deadline_text: string | null;
   interest_score: number | null;

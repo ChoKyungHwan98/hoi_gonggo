@@ -16,6 +16,7 @@ export default function AddPostingModal({ user, onClose, onAdded }: Props) {
   const [company, setCompany] = useState('');
   const [jobType, setJobType] = useState('');
   const [postedDate, setPostedDate] = useState('');
+  const [updatedDate, setUpdatedDate] = useState('');
   const [deadlineDate, setDeadlineDate] = useState('');
   const [deadlineText, setDeadlineText] = useState('');
   const [score, setScore] = useState<number | ''>('');
@@ -32,6 +33,7 @@ export default function AddPostingModal({ user, onClose, onAdded }: Props) {
     if (og.title) setTitle(og.title);
     if (og.company) setCompany(og.company);
     if (og.postedDate) setPostedDate(og.postedDate);
+    if (og.updatedDate) setUpdatedDate(og.updatedDate);
     if (og.deadlineDate) setDeadlineDate(og.deadlineDate);
     if (og.deadlineText) setDeadlineText(og.deadlineText);
     setParsing(false);
@@ -53,6 +55,7 @@ export default function AddPostingModal({ user, onClose, onAdded }: Props) {
       company: company || null,
       job_type: jobType || null,
       job_posted_date: postedDate || null,
+      job_updated_date: updatedDate || null,
       job_deadline_date: deadlineDate || null,
       deadline_text: deadlineText || null,
       interest_score: score !== '' ? Number(score) : null,
@@ -130,20 +133,25 @@ export default function AddPostingModal({ user, onClose, onAdded }: Props) {
               <input type="date" value={postedDate} onChange={(e) => setPostedDate(e.target.value)} className="field__input" />
             </label>
             <label className="field">
-              <span>갱신일/마감일</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <input type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} className="field__input" />
-                <input
-                  type="text"
-                  value={deadlineText}
-                  onChange={(e) => setDeadlineText(e.target.value)}
-                  className="field__input"
-                  placeholder="채용시 마감, 상시채용 등"
-                  style={{ fontSize: 12, color: '#92400e' }}
-                />
-              </div>
+              <span>수정일</span>
+              <input type="date" value={updatedDate} onChange={(e) => setUpdatedDate(e.target.value)} className="field__input" />
             </label>
           </div>
+
+          <label className="field">
+            <span>마감일 / 마감 텍스트</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} className="field__input" style={{ flex: 1 }} />
+              <input
+                type="text"
+                value={deadlineText}
+                onChange={(e) => setDeadlineText(e.target.value)}
+                className="field__input"
+                placeholder="채용시 마감, 상시채용 등"
+                style={{ flex: 1, fontSize: 12, color: '#92400e' }}
+              />
+            </div>
+          </label>
 
           <label className="field">
             <span>관심도 (1–10)</span>

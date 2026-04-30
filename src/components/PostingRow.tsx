@@ -92,7 +92,7 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
     return 'score--low';
   };
 
-  const colSpan = isInstructor ? 10 : 9;
+  const colSpan = isInstructor ? 11 : 10;
   const feedbackCount = posting.feedback?.length ?? 0;
   const deadlineDateVal = val('job_deadline_date') as string | null;
   const deadlineTextVal = val('deadline_text') as string | null;
@@ -163,6 +163,18 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
               className="cell__edit cell__edit--date"
               value={(val('job_posted_date') as string) ?? ''}
               onChange={(e) => update('job_posted_date', e.target.value)}
+            />
+          )}
+        </td>
+        <td className="cell cell--date cell--updated">
+          {isInstructor ? (
+            <span>{val('job_updated_date') || '—'}</span>
+          ) : (
+            <input
+              type="date"
+              className="cell__edit cell__edit--date"
+              value={(val('job_updated_date') as string) ?? ''}
+              onChange={(e) => update('job_updated_date', e.target.value)}
             />
           )}
         </td>

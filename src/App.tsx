@@ -43,7 +43,7 @@ function AppContent() {
     let query = supabase
       .from('job_postings')
       .select('*, user:users!user_id(name), feedback!posting_id(id)')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: true });
 
     if (user.role === 'student') {
       query = query.eq('user_id', user.id);
@@ -257,7 +257,9 @@ function AppContent() {
             <table className="table">
               <thead>
                 <tr>
-                  <th className="th th--no">No.</th>
+                  <th className="th th--no th--sortable" onClick={() => handleSort('created_at')}>
+                    No. <SortIcon field="created_at" />
+                  </th>
                   {isInstructor && <th className="th th--student">학생</th>}
                   <th className="th th--title">공고명</th>
                   <th className="th">회사</th>

@@ -19,6 +19,7 @@ export interface JobPosting {
   notes: string | null;
   keywords: string | null;
   analysis: string | null;
+  display_no: number | null;
   created_at: string;
   status: string | null;
   user?: { name: string } | null;

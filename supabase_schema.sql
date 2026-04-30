@@ -32,6 +32,7 @@ CREATE TABLE job_postings (
   notes             TEXT,
   keywords          TEXT,
   analysis          TEXT,
+  display_no        INTEGER,
   created_at        TIMESTAMPTZ DEFAULT now()
 );
 

@@ -48,9 +48,19 @@ export default function AddPostingModal({ user, onClose, onAdded }: Props) {
     setSaving(true);
     setError('');
 
+    // 다음 display_no = 사용자 중 max + 1
+    const { data: maxRow } = await supabase
+      .from('job_postings')
+      .select('display_no')
+      .eq('user_id', user.id)
+      .order('display_no', { ascending: false, nullsFirst: false })
+      .limit(1);
+    const nextNo = ((maxRow?.[0]?.display_no as number | null) ?? 0) + 1;
+
     const { error: insertError } = await supabase.from('job_postings').insert({
       user_id: user.id,
       url: url.trim(),
+      display_no: nextNo,
       title: title || null,
       company: company || null,
       job_type: jobType || null,

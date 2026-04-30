@@ -107,7 +107,20 @@ export default function PostingRow({ posting, index, currentUser, isInstructor, 
   return (
     <>
       <tr className={`posting-row ${urgency ? `posting-row--${urgency}` : ''} ${expired ? 'posting-row--expired' : ''}`}>
-        <td className="cell cell--no">{index}</td>
+        <td className="cell cell--no">
+          {isInstructor || currentUser.id !== posting.user_id ? (
+            <span>{index}</span>
+          ) : (
+            <input
+              type="number"
+              min={1}
+              className="cell__edit cell__edit--no"
+              value={(val('display_no') as number) ?? index}
+              onChange={(e) => update('display_no', e.target.value ? Number(e.target.value) : null, 400)}
+              title="번호 (수정하면 정렬 위치 바뀜)"
+            />
+          )}
+        </td>
         {isInstructor && (
           <td className="cell cell--student">
             {posting.user?.name ?? '—'}

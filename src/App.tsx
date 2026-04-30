@@ -17,7 +17,7 @@ function SaveIndicator() {
   return <span className="save-indicator save-indicator--error"><AlertCircle size={12} /> 저장 실패</span>;
 }
 
-type SortField = 'job_deadline_date' | 'interest_score' | 'created_at' | 'job_updated_date' | 'status';
+type SortField = 'job_deadline_date' | 'interest_score' | 'created_at' | 'job_updated_date' | 'status' | 'display_no';
 type SortDir = 'asc' | 'desc';
 
 export default function App() {
@@ -43,6 +43,7 @@ function AppContent() {
     let query = supabase
       .from('job_postings')
       .select('*, user:users!user_id(name), feedback!posting_id(id)')
+      .order('display_no', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: true });
 
     if (user.role === 'student') {
@@ -92,8 +93,7 @@ function AppContent() {
     return [...new Set(names)];
   }, [postings]);
 
-  // 사용자별로 등록 순서(created_at 오름차순) 번호 부여 — 처음 등록한 게 #1
-  // 정렬/필터/검색에 영향 받지 않는 영구 번호 (id처럼 고정)
+  // 번호 매핑: display_no 우선, 없으면 사용자별 created_at 순서로 fallback
   const postingNumberMap = useMemo(() => {
     const byUser: Record<string, JobPosting[]> = {};
     for (const p of postings) {
@@ -101,10 +101,21 @@ function AppContent() {
     }
     const m = new Map<string, number>();
     for (const uid in byUser) {
+      // display_no 없는 것들만 fallback 자동 번호 부여
       byUser[uid]
         .slice()
+        .filter(p => p.display_no == null)
         .sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''))
-        .forEach((p, i) => m.set(p.id, i + 1));
+        .forEach((p, i) => {
+          // display_no 있는 것들 중 max + 1 부터 번호 부여
+          const used = byUser[uid].map(x => x.display_no ?? 0);
+          const maxUsed = used.length > 0 ? Math.max(...used) : 0;
+          m.set(p.id, maxUsed + i + 1);
+        });
+      // display_no 있는 것들은 그 값 그대로
+      byUser[uid].forEach(p => {
+        if (p.display_no != null) m.set(p.id, p.display_no);
+      });
     }
     return m;
   }, [postings]);
@@ -257,8 +268,8 @@ function AppContent() {
             <table className="table">
               <thead>
                 <tr>
-                  <th className="th th--no th--sortable" onClick={() => handleSort('created_at')}>
-                    No. <SortIcon field="created_at" />
+                  <th className="th th--no th--sortable" onClick={() => handleSort('display_no')}>
+                    No. <SortIcon field="display_no" />
                   </th>
                   {isInstructor && <th className="th th--student">학생</th>}
                   <th className="th th--title">공고명</th>

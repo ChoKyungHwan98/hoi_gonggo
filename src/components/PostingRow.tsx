@@ -165,35 +165,55 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
           )}
         </td>
         <td className="cell cell--date">
-          {isInstructor ? (
-            <div className="deadline-cell">
-              <div className="deadline-cell__row">
-                {deadlineDateVal && <span className="deadline-date">{deadlineDateVal}</span>}
-                {dday && (
-                  <span className={`dday-badge ${expired ? 'dday-badge--expired' : urgency ? `dday-badge--${urgency}` : ''}`}>{dday}</span>
-                )}
+          {(() => {
+            const deadlineText = val('deadline_text') as string | null;
+            // 텍스트가 있으면 그것만 표시 (날짜/D-day 무시 — 채용시 마감 같은 케이스)
+            if (deadlineText) {
+              return (
+                <div className="deadline-cell">
+                  <span className="deadline-badge deadline-badge--primary">
+                    {deadlineText}
+                    {!isInstructor && (
+                      <button
+                        className="deadline-badge__clear"
+                        onClick={() => update('deadline_text', null)}
+                        title="텍스트 지우기 (날짜 입력으로 전환)"
+                      >×</button>
+                    )}
+                  </span>
+                </div>
+              );
+            }
+            // 텍스트 없음 → 날짜 + D-day
+            if (isInstructor) {
+              return (
+                <div className="deadline-cell">
+                  <div className="deadline-cell__row">
+                    {deadlineDateVal && <span className="deadline-date">{deadlineDateVal}</span>}
+                    {dday && (
+                      <span className={`dday-badge ${expired ? 'dday-badge--expired' : urgency ? `dday-badge--${urgency}` : ''}`}>{dday}</span>
+                    )}
+                  </div>
+                  {!deadlineDateVal && <span>—</span>}
+                </div>
+              );
+            }
+            return (
+              <div className="deadline-cell">
+                <div className="deadline-cell__row">
+                  <input
+                    type="date"
+                    className="cell__edit cell__edit--date"
+                    value={deadlineDateVal ?? ''}
+                    onChange={(e) => update('job_deadline_date', e.target.value)}
+                  />
+                  {dday && (
+                    <span className={`dday-badge ${expired ? 'dday-badge--expired' : urgency ? `dday-badge--${urgency}` : ''}`}>{dday}</span>
+                  )}
+                </div>
               </div>
-              {val('deadline_text') && <span className="deadline-badge">{val('deadline_text') as string}</span>}
-              {!deadlineDateVal && !val('deadline_text') && <span>—</span>}
-            </div>
-          ) : (
-            <div className="deadline-cell">
-              <div className="deadline-cell__row">
-                <input
-                  type="date"
-                  className="cell__edit cell__edit--date"
-                  value={deadlineDateVal ?? ''}
-                  onChange={(e) => update('job_deadline_date', e.target.value)}
-                />
-                {dday && (
-                  <span className={`dday-badge ${expired ? 'dday-badge--expired' : urgency ? `dday-badge--${urgency}` : ''}`}>{dday}</span>
-                )}
-              </div>
-              {val('deadline_text') && (
-                <span className="deadline-badge">{val('deadline_text') as string}</span>
-              )}
-            </div>
-          )}
+            );
+          })()}
         </td>
         <td className="cell cell--score">
           {isInstructor ? (

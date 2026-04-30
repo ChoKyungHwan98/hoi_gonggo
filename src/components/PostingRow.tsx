@@ -9,6 +9,7 @@ import type { JobPosting, User } from '../types';
 
 interface Props {
   posting: JobPosting;
+  index: number;
   currentUser: User;
   isInstructor: boolean;
   onDeleted: () => void;
@@ -27,7 +28,7 @@ const statusStyle = (s: string | null) => {
   }
 };
 
-export default function PostingRow({ posting, currentUser, isInstructor, onDeleted }: Props) {
+export default function PostingRow({ posting, index, currentUser, isInstructor, onDeleted }: Props) {
   const [expanded, setExpanded] = useState<'feedback' | 'analysis' | null>(null);
   const [editing, setEditing] = useState<Partial<JobPosting>>({});
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
@@ -93,7 +94,7 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
     return 'score--low';
   };
 
-  const colSpan = isInstructor ? 11 : 10;
+  const colSpan = isInstructor ? 12 : 11;
   const feedbackCount = posting.feedback?.length ?? 0;
   const deadlineDateVal = val('job_deadline_date') as string | null;
   const deadlineTextVal = val('deadline_text') as string | null;
@@ -105,6 +106,7 @@ export default function PostingRow({ posting, currentUser, isInstructor, onDelet
   return (
     <>
       <tr className={`posting-row ${urgency ? `posting-row--${urgency}` : ''} ${expired ? 'posting-row--expired' : ''}`}>
+        <td className="cell cell--no">{index}</td>
         {isInstructor && (
           <td className="cell cell--student">
             {posting.user?.name ?? '—'}

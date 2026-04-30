@@ -243,6 +243,13 @@ body { margin: 0; }
 .th--notes { min-width: 140px; }
 .th--actions { width: 110px; }
 .th--status { width: 90px; }
+.th--no { width: 44px; text-align: center; }
+.cell--no {
+  width: 44px; text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px; color: var(--text-muted);
+  font-weight: 500;
+}
 
 .posting-row { border-bottom: 1px solid var(--border); transition: background 0.1s; }
 .posting-row:last-of-type { border-bottom: none; }

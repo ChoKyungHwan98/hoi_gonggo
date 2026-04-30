@@ -25,9 +25,8 @@ export default function AnalysisPanel({ postingId, initialKeywords, initialAnaly
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { setStatus: setSaveStatus } = useSaveStatus();
 
-  // initial 값 변하면 동기화 (다른 클라이언트 변경 등)
-  useEffect(() => { setKeywords(splitKeywords(initialKeywords)); }, [initialKeywords]);
-  useEffect(() => { setAnalysis(initialAnalysis ?? ''); }, [initialAnalysis]);
+  // 초기값은 mount 시 한 번만. realtime fetch가 typing 중에 prop을 갱신해도
+  // 로컬 state를 덮어쓰지 않게 — 사용자 입력이 우선. 패널 닫고 다시 열면 fresh.
 
   // Esc 닫기
   useEffect(() => {

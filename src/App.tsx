@@ -240,6 +240,7 @@ function AppContent() {
             <table className="table">
               <thead>
                 <tr>
+                  <th className="th th--no">No.</th>
                   {isInstructor && <th className="th th--student">학생</th>}
                   <th className="th th--title">공고명</th>
                   <th className="th">회사</th>
@@ -264,9 +265,10 @@ function AppContent() {
                 </tr>
               </thead>
               <tbody>
-                {displayedPostings.map((p) => (
+                {displayedPostings.map((p, i) => (
                   <PostingRow
                     key={p.id}
+                    index={i + 1}
                     posting={p}
                     currentUser={currentUser}
                     isInstructor={isInstructor}

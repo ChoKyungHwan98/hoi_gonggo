@@ -40,18 +40,28 @@ function AppContent() {
 
   const fetchPostings = useCallback(async (user: User, silent = false) => {
     if (!silent) setLoading(true);
+    // display_no 정렬은 컬럼 없으면 쿼리 실패하니 JS에서. 여기선 created_at 만.
     let query = supabase
       .from('job_postings')
       .select('*, user:users!user_id(name), feedback!posting_id(id)')
-      .order('display_no', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: true });
 
     if (user.role === 'student') {
       query = query.eq('user_id', user.id);
     }
 
-    const { data } = await query;
-    setPostings((data as JobPosting[]) ?? []);
+    const { data, error } = await query;
+    if (error) {
+      console.error('[fetchPostings] supabase error:', error);
+    }
+    // display_no 우선 정렬 (없으면 Infinity 처리해서 뒤로). 컬럼이 DB에 없을 때도 안전.
+    const sorted = ((data as JobPosting[]) ?? []).slice().sort((a, b) => {
+      const an = a.display_no ?? Infinity;
+      const bn = b.display_no ?? Infinity;
+      if (an !== bn) return an - bn;
+      return (a.created_at || '').localeCompare(b.created_at || '');
+    });
+    setPostings(sorted);
     setLoading(false);
   }, []);
 

@@ -48,19 +48,21 @@ export default function AddPostingModal({ user, onClose, onAdded }: Props) {
     setSaving(true);
     setError('');
 
-    // 다음 display_no = 사용자 중 max + 1
-    const { data: maxRow } = await supabase
-      .from('job_postings')
-      .select('display_no')
-      .eq('user_id', user.id)
-      .order('display_no', { ascending: false, nullsFirst: false })
-      .limit(1);
-    const nextNo = ((maxRow?.[0]?.display_no as number | null) ?? 0) + 1;
+    // 다음 display_no = 사용자 중 max + 1. 컬럼 없으면 그냥 null 로.
+    let nextNo: number | null = null;
+    try {
+      const { data: maxRow, error: maxErr } = await supabase
+        .from('job_postings')
+        .select('display_no')
+        .eq('user_id', user.id)
+        .order('display_no', { ascending: false, nullsFirst: false })
+        .limit(1);
+      if (!maxErr) nextNo = ((maxRow?.[0]?.display_no as number | null) ?? 0) + 1;
+    } catch { /* display_no 컬럼 없음 — null로 진행 */ }
 
-    const { error: insertError } = await supabase.from('job_postings').insert({
+    const insertPayload: Record<string, unknown> = {
       user_id: user.id,
       url: url.trim(),
-      display_no: nextNo,
       title: title || null,
       company: company || null,
       job_type: jobType || null,
@@ -70,7 +72,10 @@ export default function AddPostingModal({ user, onClose, onAdded }: Props) {
       deadline_text: deadlineText || null,
       interest_score: score !== '' ? Number(score) : null,
       notes: notes || null,
-    });
+    };
+    if (nextNo !== null) insertPayload.display_no = nextNo;
+
+    const { error: insertError } = await supabase.from('job_postings').insert(insertPayload);
 
     setSaving(false);
 

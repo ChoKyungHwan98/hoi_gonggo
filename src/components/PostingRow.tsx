@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ExternalLink, Trash2, MessageSquare, BookOpen } from 'lucide-react';
+import { ExternalLink, Trash2, MessageSquare, BookOpen, AlertTriangle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import FeedbackPanel from './FeedbackPanel';
 import AnalysisPanel from './AnalysisPanel';
@@ -30,6 +30,7 @@ const statusStyle = (s: string | null) => {
 
 export default function PostingRow({ posting, index, currentUser, isInstructor, onDeleted }: Props) {
   const [expanded, setExpanded] = useState<'feedback' | 'analysis' | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editing, setEditing] = useState<Partial<JobPosting>>({});
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const { setStatus: setSaveStatus } = useSaveStatus();
@@ -82,8 +83,8 @@ export default function PostingRow({ posting, index, currentUser, isInstructor, 
   };
 
   const handleDelete = async () => {
-    if (!confirm('이 공고를 삭제하시겠어요?')) return;
     await supabase.from('job_postings').delete().eq('id', posting.id);
+    setShowDeleteConfirm(false);
     onDeleted();
   };
 
@@ -275,12 +276,40 @@ export default function PostingRow({ posting, index, currentUser, isInstructor, 
             {feedbackCount > 0 && <span className="feedback-badge">{feedbackCount}</span>}
           </button>
           {!isInstructor && currentUser.id === posting.user_id && (
-            <button className="btn btn--icon btn--danger" onClick={handleDelete} title="삭제">
+            <button
+              className="btn btn--icon btn--danger btn--delete-spaced"
+              onClick={() => setShowDeleteConfirm(true)}
+              title="삭제"
+            >
               <Trash2 size={16} />
             </button>
           )}
         </td>
       </tr>
+
+      {showDeleteConfirm && (
+        <tr className="posting-row__feedback-row">
+          <td colSpan={colSpan}>
+            <div className="delete-confirm" role="alertdialog" aria-modal="true">
+              <div className="delete-confirm__icon"><AlertTriangle size={20} /></div>
+              <div className="delete-confirm__body">
+                <p className="delete-confirm__title">정말 이 공고를 삭제할까요?</p>
+                <p className="delete-confirm__detail">
+                  <strong>{(val('title') as string) || '(제목 없음)'}</strong>
+                  {val('company') && <span className="delete-confirm__company"> · {val('company') as string}</span>}
+                </p>
+                <p className="delete-confirm__warning">삭제하면 피드백과 분석 내용도 함께 사라지고 되돌릴 수 없어요.</p>
+              </div>
+              <div className="delete-confirm__actions">
+                <button className="btn" onClick={() => setShowDeleteConfirm(false)}>취소</button>
+                <button className="btn btn--danger-filled" onClick={handleDelete}>
+                  <Trash2 size={14} /> 삭제
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
 
       {expanded === 'feedback' && (
         <tr className="posting-row__feedback-row">

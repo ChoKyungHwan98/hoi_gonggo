@@ -13,6 +13,7 @@ interface Props {
   currentUser: User;
   isInstructor: boolean;
   onDeleted: () => void;
+  onLocalUpdate?: (id: string, patch: Partial<JobPosting>) => void;
 }
 
 const STATUS_OPTIONS = ['미지원', '지원완료', '서류통과', '면접', '최종합격', '불합격'];
@@ -28,7 +29,7 @@ const statusStyle = (s: string | null) => {
   }
 };
 
-export default function PostingRow({ posting, index, currentUser, isInstructor, onDeleted }: Props) {
+export default function PostingRow({ posting, index, currentUser, isInstructor, onDeleted, onLocalUpdate }: Props) {
   const [expanded, setExpanded] = useState<'feedback' | 'analysis' | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editing, setEditing] = useState<Partial<JobPosting>>({});
@@ -69,6 +70,8 @@ export default function PostingRow({ posting, index, currentUser, isInstructor, 
   const update = (key: keyof JobPosting, value: string | number | null, debounceMs = 0) => {
     const dbValue = (value === '' || value === null || value === undefined) ? null : value;
     setEditing((prev) => ({ ...prev, [key]: dbValue }));
+    // 낙관적 부모 state 패치 — 정렬/표시 즉시 반영
+    onLocalUpdate?.(posting.id, { [key]: dbValue } as Partial<JobPosting>);
 
     if (debounceTimers.current[key]) clearTimeout(debounceTimers.current[key]);
 

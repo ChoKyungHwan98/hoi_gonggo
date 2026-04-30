@@ -89,6 +89,12 @@ function AppContent() {
     };
   }, [currentUser, fetchPostings]);
 
+  // 낙관적 업데이트 — PostingRow에서 update 호출 시 로컬 state 즉시 패치
+  // → 정렬/표시 즉시 반영. realtime fetch가 도착하면 자연 동기화.
+  const updatePostingOptimistic = useCallback((id: string, patch: Partial<JobPosting>) => {
+    setPostings(prev => prev.map(p => p.id === id ? { ...p, ...patch } : p));
+  }, []);
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -310,6 +316,7 @@ function AppContent() {
                     currentUser={currentUser}
                     isInstructor={isInstructor}
                     onDeleted={() => fetchPostings(currentUser)}
+                    onLocalUpdate={updatePostingOptimistic}
                   />
                 ))}
               </tbody>
